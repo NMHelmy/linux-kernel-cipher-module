@@ -1,0 +1,5 @@
+
+obj-m := kcipher.o
+kcipher-objs := cipher_module.o RC4.o
+
+ccflags-y := -Wall -Wextra

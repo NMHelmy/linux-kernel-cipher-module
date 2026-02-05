@@ -1,0 +1,124 @@
+# Kernel Module Build Artifacts
+*.o
+*.ko
+*.mod
+*.mod.c
+*.mod.o
+*.o.d
+*.o.cmd
+*.ko.cmd
+*.mod.cmd
+.*.cmd
+*.symvers
+*.order
+Module.symvers
+modules.order
+
+# Kernel build directories
+.tmp_versions/
+.cache.mk
+
+# Debug files
+*.dwo
+
+# Compiled source
+*.com
+*.class
+*.dll
+*.exe
+*.so
+*.dylib
+
+# Temporary files
+*~
+*.swp
+*.swo
+.*.swp
+.*.swo
+*.tmp
+*.bak
+*.orig
+\#*\#
+.#*
+
+# OS specific files
+.DS_Store
+.DS_Store?
+._*
+Thumbs.db
+Desktop.ini
+
+# Editor specific
+.vscode/
+.idea/
+*.sublime-*
+*.code-workspace
+[._]*.s[a-v][a-z]
+[._]*.sw[a-p]
+*.un~
+Session.vim
+.netrwhist
+tags
+
+# Backup files
+*.bak
+*.gho
+*.ori
+*.orig
+*.rej
+
+# Patch files
+*.patch
+*.diff
+
+# Logs and databases
+*.log
+*.sql
+*.sqlite
+*.db
+
+# Test output
+tests/*.log
+tests/*.out
+tests/results/
+test-results/
+
+# Personal notes and TODO
+NOTES.md
+TODO.md
+TODO.txt
+notes.txt
+.notes/
+
+# Development and scratch
+dev/
+scratch/
+tmp/
+temp/
+
+# Encryption test files (don't commit test data)
+*.enc
+*.encrypted
+encrypted_*
+decrypted_*
+test_*.bin
+
+# Build outputs that should be regenerated
+src/kcipher.ko
+src/*.mod.c
+src/.*.d
+
+# ctags/cscope
+tags
+TAGS
+cscope.*
+
+# Core dumps
+core
+core.*
+*.core
+vgcore.*
+
+# Generated documentation
+html/
+latex/

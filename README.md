@@ -1,132 +1,308 @@
-# Cipher-Kernel-Module
+# kcipher - Kernel Cipher Device Module
 
-This is a Linux Kernel Module that implements a **cipher device** using the **RC4 encryption algorithm**. The module allows users to encrypt and decrypt messages using a key, and provides access to these functionalities through both a **character device** and `/proc` files.
+A Linux kernel module that implements encrypted character devices for educational purposes. This module demonstrates kernel programming concepts including character device drivers, the `/proc` filesystem, encryption, and kernel synchronization primitives.
 
-## Features
-* RC4 Encryption/Decryption: Implements the RC4 stream cipher for encrypting and decrypting messages.
-* Character Device Interface: Provides a character device (/dev/cipher) for writing messages and keys, and reading encrypted messages.
-* Proc File Interface: Exposes encrypted messages and key management through /proc/cipher and /proc/cipher_key.
-* Kernel Logging: Logs key events (e.g., device open/close, message encryption/decryption) using pr_info.
+## ⚠️ Security Warning
 
-## Prerequisites
-* Linux Kernel Development Environment: Ensure you have the kernel headers and development tools installed.
-* Root Privileges: Required to load and unload kernel modules.
-* GCC: To compile the kernel module.
+**This module uses RC4 encryption, which is cryptographically broken and insecure. This project is for educational purposes only and should NEVER be used in production environments or for protecting sensitive data.**
 
-## Usage
-### Compilation
-1. Compile the module:
+## 🎯 Features
+
+- **Dual Interface Design**: Both `/dev` and `/proc` filesystem interfaces
+- **Symmetric Encryption**: RC4 stream cipher (educational implementation)
+- **Thread-Safe**: Mutex-based synchronization for concurrent access
+- **Security-Conscious**: Secure memory zeroing for sensitive data
+- **Statistics Tracking**: Monitor encryption/decryption operations
+- **Comprehensive Logging**: Detailed kernel logs for debugging
+
+## 📋 Requirements
+
+- Linux kernel headers (matching your running kernel)
+- GCC compiler
+- Make
+- Root/sudo access for loading modules and creating device nodes
+
+### Installing Requirements (Ubuntu/Debian)
+
+```bash
+sudo apt update
+sudo apt install build-essential linux-headers-$(uname -r)
 ```
+
+### Installing Requirements (Fedora/RHEL)
+
+```bash
+sudo dnf install gcc make kernel-devel kernel-headers
+```
+
+## 🚀 Quick Start
+
+### 1. Build the Module
+
+```bash
 make
 ```
-### Loading the Module
-1. Load the module:
-```
-sudo insmod cipher_module.ko
-```
-2. Verify that the module is loaded:
-```
-dmesg | tail
-```
-  * You should see messages like:
-    ```
-    Initializing cipher module
-    Allocated major number: 123
-    Cipher module loaded with major 123
-    ```
-3. Check the /dev and /proc files:
-```
-ls /dev/cipher*
-ls /proc/cipher*
-```
-  * You should see:
-      ```
-      /dev/cipher  /dev/cipher_key
-      /proc/cipher  /proc/cipher_key
-      ```
 
-### Using the Cipher Device
-1. Write a Key:
-```
-echo "YOUR_SECRET_KEY" > /dev/cipher_key
-```
-2. Write a Message:
-```
-echo "YOUR_SECRET_MESSAGE" > /dev/cipher
-```
-3. Read the Encrypted Message:
-```
-sudo cat /dev/cipher
-```
-4. Retrieve the Original Message:
-* Write the key to /proc/cipher_key:
-```
-echo "YOUR_SECRET_KEY" > /proc/cipher_key
-```
-* Read the decrypted message:
-```
-sudo cat /proc/cipher
-```
-### Unloading the Module
-1. Unload the module:
-```
-sudo rmmod cipher_module.ko
-```
-2. Verify that the module is unloaded:
-```
-dmesg | tail
-```
-* You should see:
-```
-Cipher module unloaded
-```
-## Code Overview
-### Key Files
-* cipher_module.c: The main kernel module implementation.
-    * Character Device: Provides /dev/cipher for writing messages and keys, and reading encrypted messages.
-    * Proc Files: Provides /proc/cipher for decrypted messages and /proc/cipher_key for setting the key.
-    * RC4 Integration: Calls the RC4 algorithm for encryption and decryption.
+### 2. Load the Module
 
-* RC4.c: Implements the RC4 encryption algorithm.
-    * rc4(): Encrypts or decrypts a message using the provided key.
-* RC4.h: Header file for the RC4 implementation.
-
-### Key Functions
-* cipher_open(): Logs when the cipher device is opened.
-* cipher_release(): Logs when the cipher device is closed.
-* cipher_write(): Handles writing messages or keys to the device.
-* cipher_read(): Returns the encrypted message or a warning for key access.
-* proc_read_cipher(): Reads and decrypts the message from /proc/cipher.
-* proc_write_cipher_key(): Writes the key to /proc/cipher_key.
-* rc4(): Encrypts or decrypts a message using the RC4 algorithm.
-
-## Proc Files
-* /proc/cipher: Read the decrypted message.
-* /proc/cipher_key: Write the encryption key.
-
-## Character Device
-* /dev/cipher: Write messages or keys, and read encrypted messages.
-
-## Example Workflow
-1. Set the Key:
+```bash
+make load
 ```
-echo "mysecretkey" > /dev/cipher_key
+
+### 3. Check the Assigned Major Number
+
+```bash
+sudo dmesg | grep kcipher
+# Look for: "kcipher: Allocated major number: XXX"
 ```
-2. Encrypt a Message:
+
+### 4. Create Device Nodes
+
+```bash
+make setup-devices MAJOR=XXX  # Replace XXX with the major number from step 3
 ```
+
+### 5. Test the Module
+
+```bash
+# Set the encryption key
+echo "MySecretKey123" > /dev/cipher_key
+
+# Try to read the key (will be denied)
+cat /dev/cipher_key
+# Output: Go away silly one, you cannot see my key >-:
+
+# Encrypt a message
 echo "Hello, World!" > /dev/cipher
-```
-3. Read the Encrypted Message:
-```
-sudo cat /dev/cipher
-```
-4. Decrypt the Message:
 
-    * Write the key to /proc/cipher_key:
-    ```
-    echo "mysecretkey" > /proc/cipher_key
-    ```
-    * Read the decrypted message:
-    ```
-    sudo cat /proc/cipher
-    ```
+# Read encrypted message (gibberish)
+cat /dev/cipher
+# Output: (binary garbage)
+
+# Decrypt the message
+echo "MySecretKey123" > /proc/cipher_key
+cat /proc/cipher
+# Output: Hello, World!
+```
+
+## 📚 Architecture
+
+### Device Interfaces
+
+| Interface | Path | Mode | Purpose |
+|-----------|------|------|---------|
+| Cipher Device | `/dev/cipher` | R/W | Write plaintext (encrypts), read ciphertext |
+| Key Device | `/dev/cipher_key` | W only* | Set encryption key |
+| Proc Cipher | `/proc/cipher` | R only | Read decrypted message |
+| Proc Key | `/proc/cipher_key` | W only | Set decryption key |
+
+*Technically readable, but returns a denial message
+
+### Data Flow
+
+```
+Encryption Flow:
+User → /dev/cipher_key (write key)
+User → /dev/cipher (write plaintext) → RC4 encryption → Stored ciphertext
+User → /dev/cipher (read) → Returns ciphertext
+
+Decryption Flow:
+User → /proc/cipher_key (write key)
+User → /proc/cipher (read) → RC4 decryption → Returns plaintext
+```
+
+### Internal Structure
+
+```c
+// Global state (protected by mutexes)
+message[4096]           // Plaintext buffer
+encrypted_message[4096] // Ciphertext buffer
+key[128]                // Encryption/decryption key
+
+// Synchronization
+cipher_mutex            // Protects message buffers
+key_mutex               // Protects key buffer
+```
+
+## 🔧 Usage Examples
+
+### Example 1: Encrypt a File
+
+```bash
+# Set encryption key
+echo "MyPassword" > /dev/cipher_key
+
+# Encrypt /etc/hosts
+cat /etc/hosts > /dev/cipher
+
+# Save encrypted version
+cat /dev/cipher > encrypted_hosts.bin
+
+# Decrypt it
+echo "MyPassword" > /proc/cipher_key
+cat /proc/cipher
+```
+
+### Example 2: Wrong Key Detection
+
+```bash
+# Encrypt with one key
+echo "CorrectKey" > /dev/cipher_key
+echo "Secret Message" > /dev/cipher
+
+# Try to decrypt with wrong key
+echo "WrongKey" > /proc/cipher_key
+cat /proc/cipher
+# Output: (gibberish - decryption with wrong key)
+
+# Decrypt with correct key
+echo "CorrectKey" > /proc/cipher_key
+cat /proc/cipher
+# Output: Secret Message
+```
+
+### Example 3: Binary Data
+
+```bash
+# Works with binary files too
+echo "MyKey" > /dev/cipher_key
+cat /bin/ls > /dev/cipher
+
+# Decrypt
+echo "MyKey" > /proc/cipher_key
+cat /proc/cipher > decrypted_ls
+```
+
+## 🛠️ Makefile Targets
+
+| Target | Description |
+|--------|-------------|
+| `make` | Build the kernel module |
+| `make clean` | Remove build artifacts |
+| `make load` | Load module into kernel |
+| `make unload` | Unload module from kernel |
+| `make reload` | Unload and reload module |
+| `make setup-devices MAJOR=N` | Create `/dev` nodes |
+| `make remove-devices` | Remove `/dev` nodes |
+| `make status` | Show module status |
+| `make logs` | View recent kernel logs |
+| `make help` | Show all available targets |
+
+## 📊 Monitoring and Debugging
+
+### View Kernel Logs
+
+```bash
+# Recent kcipher logs
+make logs
+
+# Or use dmesg directly
+sudo dmesg | grep kcipher
+
+# Follow logs in real-time
+sudo dmesg -w | grep kcipher
+```
+
+### Check Module Status
+
+```bash
+make status
+```
+
+### Module Statistics
+
+The module tracks encryption/decryption operations, visible in logs when unloading:
+
+```bash
+make unload
+# Check dmesg for: "Stats - Encryptions: X, Decryptions: Y"
+```
+
+## 🔍 Educational Concepts Demonstrated
+
+This module teaches several important kernel programming concepts:
+
+1. **Character Device Drivers**
+   - Device registration with `alloc_chrdev_region()`
+   - Character device initialization with `cdev_init()` and `cdev_add()`
+   - File operations structure
+
+2. **Proc Filesystem**
+   - Creating proc entries with `proc_create()`
+   - Custom proc operations structure
+
+3. **Kernel Synchronization**
+   - Mutex usage for protecting shared data
+   - Proper locking order to prevent deadlocks
+
+4. **User-Kernel Space Communication**
+   - `copy_from_user()` and `copy_to_user()`
+   - Error handling for user space operations
+
+5. **Memory Management**
+   - Kernel memory allocation with `kmalloc()`
+   - Secure memory zeroing for sensitive data
+
+6. **Module Lifecycle**
+   - Initialization and cleanup functions
+   - Proper resource cleanup on errors
+
+## 🐛 Troubleshooting
+
+### Module won't load
+
+**Error**: `insmod: ERROR: could not insert module`
+
+**Solution**: Check kernel logs
+```bash
+sudo dmesg | tail -20
+```
+
+### Device nodes not working
+
+**Error**: Permission denied when accessing `/dev/cipher`
+
+**Solution**: Check permissions
+```bash
+ls -l /dev/cipher*
+# Should show: crw-rw-rw-
+
+# If not, fix permissions:
+sudo chmod 666 /dev/cipher /dev/cipher_key
+```
+
+### Wrong major number
+
+**Error**: Device operations fail
+
+**Solution**: Ensure major number matches
+```bash
+# Check loaded module's major number
+sudo dmesg | grep "Allocated major number"
+
+# Check device node's major number
+ls -l /dev/cipher
+# First number in the middle should match
+
+# If they don't match, recreate nodes:
+make remove-devices
+make setup-devices MAJOR=XXX  # Use correct number
+```
+
+### Module won't unload
+
+**Error**: `rmmod: ERROR: Module kcipher is in use`
+
+**Solution**: Close all file handles
+```bash
+# Find processes using the module
+lsof | grep cipher
+
+# Kill those processes or wait for them to finish
+# Then try again:
+make unload
+```
+
+---
+
+**Remember**: This is for learning only. Never use RC4 or this module for actual security needs!
