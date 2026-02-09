@@ -6,7 +6,7 @@ A Linux kernel module that implements encrypted character devices for educationa
 
 **This module uses RC4 encryption, which is cryptographically broken and insecure. This project is for educational purposes only and should NEVER be used in production environments or for protecting sensitive data.**
 
-## 🎯 Features
+## Features
 
 - **Dual Interface Design**: Both `/dev` and `/proc` filesystem interfaces
 - **Symmetric Encryption**: RC4 stream cipher (educational implementation)
@@ -15,7 +15,7 @@ A Linux kernel module that implements encrypted character devices for educationa
 - **Statistics Tracking**: Monitor encryption/decryption operations
 - **Comprehensive Logging**: Detailed kernel logs for debugging
 
-## 📋 Requirements
+## Requirements
 
 - Linux kernel headers (matching your running kernel)
 - GCC compiler
@@ -35,7 +35,7 @@ sudo apt install build-essential linux-headers-$(uname -r)
 sudo dnf install gcc make kernel-devel kernel-headers
 ```
 
-## 🚀 Quick Start
+## Quick Start
 
 ### 1. Build the Module
 
@@ -85,7 +85,7 @@ cat /proc/cipher
 # Output: Hello, World!
 ```
 
-## 📚 Architecture
+## Architecture
 
 ### Device Interfaces
 
@@ -188,7 +188,7 @@ cat /proc/cipher > decrypted_ls
 | `make logs` | View recent kernel logs |
 | `make help` | Show all available targets |
 
-## 📊 Monitoring and Debugging
+## Monitoring and Debugging
 
 ### View Kernel Logs
 
@@ -218,7 +218,7 @@ make unload
 # Check dmesg for: "Stats - Encryptions: X, Decryptions: Y"
 ```
 
-## 🔍 Educational Concepts Demonstrated
+## Educational Concepts Demonstrated
 
 This module teaches several important kernel programming concepts:
 
@@ -247,7 +247,7 @@ This module teaches several important kernel programming concepts:
    - Initialization and cleanup functions
    - Proper resource cleanup on errors
 
-## 🐛 Troubleshooting
+## Troubleshooting
 
 ### Module won't load
 
